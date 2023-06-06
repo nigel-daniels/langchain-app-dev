@@ -1,6 +1,6 @@
 import { ChatOpenAI } from 'langchain/chat_models/openai';
 import { ConversationChain } from 'langchain/chains';
-import { BufferMemory, BufferWindowMemory } from 'langchain/memory';
+import { BufferMemory, BufferWindowMemory, ConversationSummaryMemory } from 'langchain/memory';
 
 let llm = new ChatOpenAI({temperature: 0.0});
 /*
@@ -44,7 +44,7 @@ console.log(conversation3);
 // Chatbots appear to have memeory as the entire conversation is provided as context
 // The window memeory with k set to 1 demonstrates a memory with 'goldfish memeory'
 // Its just recall one transaction, typically this would be a larger number
-
+/*
 let windowMemory = new BufferWindowMemory({k: 1});
 let chain2 = new ConversationChain({llm: llm, memory: windowMemory});
 
@@ -67,3 +67,7 @@ console.log(response5);
 let response6 = await chain2.predict({input: 'What is my name?'});
 console.log(response6);
 */
+
+// Token Memeory is not implemented in JS
+
+//
