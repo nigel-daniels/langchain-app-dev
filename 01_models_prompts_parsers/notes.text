@@ -1,0 +1,19 @@
+Templates
+---------
+
+Templates allow us to construct prompts that we can reuse many times.
+Also LangChain provides multiple prompts libraries to achieve different tasks,
+such as connecting to a database, etc.
+
+
+LangChain output parsing and prompt templates
+---------------------------------------------
+The LangChain library functions can parse the LLM output assuming it will use
+certain keywords. For example it could look for the keywords:
+-Thought
+-Action
+-Observation
+
+These are keywords for the Chain-of-Thought Reasoning (ReAct).
+
+A prompt looking for the key words can be coupled with a parser.
