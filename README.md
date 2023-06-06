@@ -7,14 +7,9 @@ If you want to try these out you will first need to setup your own ChatGPT secre
 ```
 export OPENAI_API_KEY='your_secret_key_value'
 ```
-When you restart the shell or your machine the environment value `OPENAI_API_KEY` will be available to the `helper.js`.
+When you restart the shell or your machine the environment value `OPENAI_API_KEY` will be available to the `helper.js` and to langchain.
 
 ### Node and JS
-Before trying any of the exercises don't for get to run `npm install` in the `./gptsystem` directory to install the Node modules needed.
-In the root directory you will see the `helper.js`, all of the exercises use this to make their calls to the ChatGPT API.
-In each subdirectory you will find a `*.js` file and, sometimes, some supporting text files. Each JS file contains multiple prompts. Generally there are a couple of lines near the end of the file, such as:
-```
-let completion = await getCompletion(prompt8);
-console.log(completion);
-```
-In most cases you can just change the prompt passed to the `getCompletion()` function to try different exercises out. In some cases you will see code block commented out using the `\* ... *\` comment markers. In these cases the commented code blocks will have their own calls to `getCompletion()`, often in a loop of some kind. If you uncomment these blocks then be sure to comment out the last to calls above while you run that exercise.
+Before trying any of the exercises don't for get to run `npm install` in the `./langchain-app-dev` directory to install the Node modules needed.
+In each subdirectory you will find a `*.js` file and, sometimes, some supporting files. Each JS file contains multiple prompts.
+In most cases the initial exercise is ready to run and the other exercises are commented out using the `\* ... *\` comment markers. In these cases the commented code blocks will have their own calls to the LLM. If you uncomment these blocks then be sure to comment out the last to calls above while you run that exercise, it will reduce run time and costs.
