@@ -1,0 +1,40 @@
+Overview
+--------
+
+LangChain is an OSS framework for developing LLM packages.
+Offers Python and JS packages.
+Focuses on composition and modularity.
+The key value adds are:
+    Modular components.
+    Use cases: common ways to combine components.
+
+Components
+----------
+
+Modules
+- LLMs: 20+ integrations
+- Chat models
+- Text embedding models: 10+ integrations
+
+Prompts
+- Prompt templates
+- Output parsers: 5+ implementations
+    - Retry/fixing logic
+- Example selectors: 5+ implementations
+
+Indexes
+- Document loaders: 50+ implementations
+- Text splitters: 10+ implementations
+- Vector stores: 10+ integrations
+- Retrievers: 5+ integrations/implementations
+
+Chains
+- Prompt + LLM + Output parsing
+- Can be used as building blocks for longer chains
+- More application specific chains: 20+ types
+
+Agents
+- Agent types: 5+ types
+    - Algorithms for getting LLMs to use tools
+- Agent toolkits: 10+ implementations
+    - Agents armed with specific tools for a specific application
