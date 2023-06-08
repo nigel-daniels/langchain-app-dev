@@ -1,6 +1,6 @@
 import { getCompletion } from './helper.js';
 import { ChatOpenAI } from 'langchain/chat_models/openai';
-import { PromptTemplate, ChatPromptTemplate } from 'langchain/prompts';
+import { PromptTemplate } from 'langchain/prompts';
 import { HumanChatMessage } from 'langchain/schema';
 import { StructuredOutputParser } from 'langchain/output_parsers';
 import { z } from 'zod';
