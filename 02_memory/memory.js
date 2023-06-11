@@ -8,7 +8,7 @@ let llm = new ChatOpenAI({temperature: 0.0});
 // This memory allows for the storing of messages and then extracts
 // the messages in a variable.
 // Here is an example of having a conversation with the LLm
-/*
+
 let memory1 = new BufferMemory();
 let chain1 = new ConversationChain({llm: llm, memory: memory1});
 
@@ -21,7 +21,7 @@ console.log(response3);
 
 let conversation1 = await memory1.loadMemoryVariables();
 console.log(conversation1);
-*/
+
 
 // This just shows how we could pre-populate the memory
 /*
