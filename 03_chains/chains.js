@@ -1,8 +1,7 @@
 import { ChatOpenAI } from 'langchain/chat_models/openai';
 import { ChatPromptTemplate, HumanMessagePromptTemplate, PromptTemplate } from 'langchain/prompts';
-import { LLMChain, SimpleSequentialChain, SequentialChain } from 'langchain/chains';
-import { MultiPromptChain } from 'langchain/chains/router';
-import { LLMRouterChain, RouterOutputParser } from 'langchain/chains/router/llm_router';
+import { RouterOutputParser } from 'langchain/output_parsers';
+import { LLMChain, SimpleSequentialChain, SequentialChain, LLMRouterChain, MultiPromptChain } from 'langchain/chains';
 import fs from 'fs';
 
 // Note: here we use a higher temp for more creativity
@@ -54,44 +53,40 @@ let response2 = await simpleSequentialChain.run(product2);
 console.log(response2);
 */
 
+
 // SequentialChain
 /*
+// Here we build up the prompts, note JS we use the basic PromptTemplate
 let template4 = 'Translate the following review to english:\n\n{review}';
-let promptTemplate4 = ChatPromptTemplate.fromPromptMessages([
-    HumanMessagePromptTemplate.fromTemplate(template4)
-]);
-let llmChain4 = new LLMChain({llm: llm1, prompt: promptTemplate4, outputKey: 'english_review'});
+let promptTemplate4 = new PromptTemplate({template: template4, inputVariables: ['review']});
+let llmChain4 = new LLMChain({llm: llm, prompt: promptTemplate4, outputKey: 'english_review'});
 
 let template5 = 'Can you summarize the following review in 1 sentence:\n\n{english_review}';
-let promptTemplate5 = ChatPromptTemplate.fromPromptMessages([
-    HumanMessagePromptTemplate.fromTemplate(template5)
-]);
-let llmChain5 = new LLMChain({llm: llm1, prompt: promptTemplate5, outputKey: 'summary'});
+let promptTemplate5 = new PromptTemplate({template: template5, inputVariables: ['english_review']});
+let llmChain5 = new LLMChain({llm: llm, prompt: promptTemplate5, outputKey: 'summary'});
 
 let template6 = 'What language is the following review:\n\n{review}';
-let promptTemplate6 = ChatPromptTemplate.fromPromptMessages([
-    HumanMessagePromptTemplate.fromTemplate(template6)
-]);
-let llmChain6 = new LLMChain({llm: llm1, prompt: promptTemplate6, outputKey: 'language'});
+let promptTemplate6 = new PromptTemplate({template: template6, inputVariables: ['review']});
+let llmChain6 = new LLMChain({llm: llm, prompt: promptTemplate6, outputKey: 'language'});
 
 let template7 = 'Write a follow up response to the following summary in the ' +
     'specified language:\n\nSummary: {summary}\n\nLanguage: {language}';
-let promptTemplate7 = ChatPromptTemplate.fromPromptMessages([
-    HumanMessagePromptTemplate.fromTemplate(template7)
-]);
-let llmChain7 = new LLMChain({llm: llm1, prompt: promptTemplate7, outputKey: 'followup_message'});
+let promptTemplate7 = new PromptTemplate({template: template7, inputVariables: ['summary', 'language']});
+let llmChain7 = new LLMChain({llm: llm, prompt: promptTemplate7, outputKey: 'followup_message'});
 
+// Now we can build up the sequence in a chain, note that the output and input
+// names MUST match, also that the 'summary' from llmChain5 only get's used later
+// we can also see the initial review is used at the beginning and in llmChain6
 let sequentialChain = new SequentialChain({
     chains: [llmChain4, llmChain5, llmChain6, llmChain7],
     inputVariables: ['review'],
-    outputVariables:['english_review', 'summary', 'language', 'followup_message'],
+    outputVariables:['english_review', 'summary', 'followup_message'],
     verbose: true
 });
 
-
-//let review1 = data.loc({rows: [5], columns: ['Review']}).values[0][0];
-let review1 = 'Je trouve le goût médiocre. La mousse ne tient pas, c\'est bizarre. J\'achète les mêmes dans le commerce et le goût est bien meilleur... Vieux lot ou contrefaçon !?';
-let response3 = await sequentialChain(review1);
+// Now we can run our sequence
+let review1 = {review: 'Je trouve le goût médiocre. La mousse ne tient pas, c\'est bizarre. J\'achète les mêmes dans le commerce et le goût est bien meilleur... Vieux lot ou contrefaçon !?'};
+let response3 = await sequentialChain.call(review1);
 console.log(response3);
 */
 
@@ -99,8 +94,10 @@ console.log(response3);
 // This chain can make decision on which subsiquent chain to call based on
 // the input given.
 // here we need factual answers
+
 let llm2 = new ChatOpenAI({temperature: 0.0});
 
+// Load the templates and build the prompt outlines
 let templatesFile = fs.readFileSync('./templates.json', 'utf8');
 let templates = JSON.parse(templatesFile);
 
@@ -116,7 +113,7 @@ let prompts = [
         template: templates.math_template
     },
     {
-        name: 'History',
+        name: 'history',
         description: 'Good for answering history questions',
         template: templates.history_template
     },
@@ -127,19 +124,85 @@ let prompts = [
     }
 ];
 
+
+// Build an array of destination LLMChains and a list of the names with descriptions
 let destinationChains = {};
-let destinations = [];
 
-for(const item in prompts) {
-    let chatPrompt = ChatPromptTemplate.fromPromptMessages([
-        HumanMessagePromptTemplate.fromTemplate(item.template)
-    ]);
+for(const item of prompts) {
+    let prompt = PromptTemplate.fromTemplate(item.template);
 
-    let chain = LLMChain({llm: llm2, prompt: chatPrompt});
+    let chain = new LLMChain({llm: llm2, prompt: prompt});
 
     destinationChains[item.name] = chain;
-
-    destinations.push({item.name: item.description});
 }
 
-let destinationText = '\n' + destinations;
+let destinations = prompts.map(item => (item.name + ': ' + item.description)).join('\n');
+//console.log('#####\n' + JSON.stringify(destinations) + '\n######');
+
+// Create a default destination in case the LLM cannot decide
+let defaultPrompt = PromptTemplate.fromTemplate('{input}');
+
+let defaultChain = new LLMChain({llm: llm2, prompt: defaultPrompt});
+/*
+let routerTemplate = `Given a raw text input to a \
+language model select the model prompt best suited for the input. \
+You will be given the names of the available prompts and a \
+description of what the prompt is best suited for. \
+You may also revise the original input if you think that revising\
+it will ultimately lead to a better response from the language model.
+
+<< FORMATTING >>
+Return a markdown code snippet with a JSON object formatted to look like:
+\`\`\`json
+{{
+    "destination": string, // name of the prompt to use or "DEFAULT"
+    "next_inputs": string // a potentially modified version of the original input
+}}
+\`\`\`
+
+REMEMBER: "destination" MUST be one of the candidate prompt \
+names specified below OR it can be "DEFAULT" if the input is not\
+well suited for any of the candidate prompts.
+REMEMBER: "next_inputs" can just be the original input \
+if you don't think any modifications are needed.
+
+<< CANDIDATE PROMPTS >>
+${destinations}
+
+<< INPUT >>
+{input}
+
+<< OUTPUT (remember to include the \`\`\`json)>>`;
+*/
+// Load the routing prompt
+let routerTemplate = fs.readFileSync('./router_template.txt', 'utf8');
+
+// Now we can construct the router with the list of route names and descriptions
+routerTemplate = routerTemplate.replace('{destinations}', destinations);
+
+
+let routerPrompt = new PromptTemplate({
+	template: routerTemplate,
+    inputVariables: ['input'],
+    outputParser: new RouterOutputParser()
+});
+//console.log('#####\n' + JSON.stringify(routerPrompt) + '\n######');
+let routerChain = LLMRouterChain.fromLLM(llm2, routerPrompt);
+
+
+// Now we can bring all of the pieces together!
+let multiPromptChain = new MultiPromptChain({
+	routerChain,
+    destinationChains,
+    defaultChain,
+	verbose: true
+});
+
+let response4 = await multiPromptChain.run('What is black body radiation?');
+console.log(response4.text);
+
+let response5 = await multiPromptChain.run('What is 2 + 2?');
+console.log(response5.text);
+
+let response6 = await multiPromptChain.run('Why does every cell in our body contain DNA?');
+console.log(response6.text);
