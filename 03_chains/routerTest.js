@@ -73,11 +73,18 @@ let routerTemplate = 'Given a raw text input to a ' +
 
 // Now we can construct the router with the list of route names and descriptions
 routerTemplate = routerTemplate.replace('{destinations}', destinations);
+let routerParser = new RouterOutputParser();
+let routerFormat = routerParser.getFormatInstructions();
+
+console.log(routerFormat);
 
 let routerPrompt = new PromptTemplate({
 	template: routerTemplate,
     inputVariables: ['input'],
-    outputParser: new RouterOutputParser()
+    outputParser: routerParser,
+    partialVariables: {
+        format_instructions: routerFormat
+    }
 });
 //console.log('#####\n' + JSON.stringify(routerPrompt) + '\n######');
 let routerChain = LLMRouterChain.fromLLM(llm2, routerPrompt);

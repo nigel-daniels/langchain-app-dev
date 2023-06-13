@@ -9,7 +9,7 @@ let llm1 = new ChatOpenAI({temperature: 0.9});
 
 // LLMChain
 // A basic chain of conversation
-/*
+
 let template1 = 'What is the best name to describe a company that makes {product}?';
 
 let promptTemplate1 = ChatPromptTemplate.fromPromptMessages([
@@ -22,7 +22,7 @@ let product1 = 'Queen Size Sheet Set';
 
 let response1 = await llmChain.call({product: product1});
 console.log(response1.text);
-*/
+
 // Sequential chains
 // This type of chain tat combines multiple chains where the output of one chain
 // is the input for the next chain.
@@ -93,8 +93,11 @@ console.log(response3);
 // RouterChain
 // This chain can make decision on which subsiquent chain to call based on
 // the input given.
+// NOTE There is still a bug in this getting the RouterOutputParser to work
+//      Its not clear if there is an issue with the router parser or how
+//      I'm attempting to use it! See routerTest.js
+/*
 // here we need factual answers
-
 let llm2 = new ChatOpenAI({temperature: 0.0});
 
 // Load the templates and build the prompt outlines
@@ -143,50 +146,19 @@ let destinations = prompts.map(item => (item.name + ': ' + item.description)).jo
 let defaultPrompt = PromptTemplate.fromTemplate('{input}');
 
 let defaultChain = new LLMChain({llm: llm2, prompt: defaultPrompt});
-/*
-let routerTemplate = `Given a raw text input to a \
-language model select the model prompt best suited for the input. \
-You will be given the names of the available prompts and a \
-description of what the prompt is best suited for. \
-You may also revise the original input if you think that revising\
-it will ultimately lead to a better response from the language model.
 
-<< FORMATTING >>
-Return a markdown code snippet with a JSON object formatted to look like:
-\`\`\`json
-{{
-    "destination": string, // name of the prompt to use or "DEFAULT"
-    "next_inputs": string // a potentially modified version of the original input
-}}
-\`\`\`
-
-REMEMBER: "destination" MUST be one of the candidate prompt \
-names specified below OR it can be "DEFAULT" if the input is not\
-well suited for any of the candidate prompts.
-REMEMBER: "next_inputs" can just be the original input \
-if you don't think any modifications are needed.
-
-<< CANDIDATE PROMPTS >>
-${destinations}
-
-<< INPUT >>
-{input}
-
-<< OUTPUT (remember to include the \`\`\`json)>>`;
-*/
 // Load the routing prompt
 let routerTemplate = fs.readFileSync('./router_template.txt', 'utf8');
 
 // Now we can construct the router with the list of route names and descriptions
 routerTemplate = routerTemplate.replace('{destinations}', destinations);
 
-
 let routerPrompt = new PromptTemplate({
 	template: routerTemplate,
     inputVariables: ['input'],
     outputParser: new RouterOutputParser()
 });
-//console.log('#####\n' + JSON.stringify(routerPrompt) + '\n######');
+
 let routerChain = LLMRouterChain.fromLLM(llm2, routerPrompt);
 
 
@@ -206,3 +178,4 @@ console.log(response5.text);
 
 let response6 = await multiPromptChain.run('Why does every cell in our body contain DNA?');
 console.log(response6.text);
+*/
