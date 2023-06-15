@@ -13,7 +13,7 @@
     "d3-dsv": "^2.0.0",
     "danfojs-node": "^1.1.2",
     "hnswlib-node": "^1.4.2",
-    "langchain": "^0.0.92",
+    "langchain": "^0.0.94",
     "openai": "^3.2.1",
     "peggy": "^3.0.2",
     "zod": "^3.21.4"
