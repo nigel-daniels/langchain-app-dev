@@ -1,15 +1,23 @@
-Given a raw text input to a language model select the model prompt best suited for the input. You will be given the names of the available prompts and a description of what the prompt is best suited for. You may also revise the original input if you think that revising it will ultimately lead to a better response from the language model.
+Based on the input question to an large language model take the following steps:
+1) decide if the question can be answered by any of the destinations based on the destination descriptions.
+2) If none of the destinations are a good fit use "DEFAULT" as the response, For example if the question is about pharmacology but there is no "health care" destination use DEFAULT.
+3) Check is set to DEFAULT, if there is no match or set it to DEFAULT.
+4) You may also revise the original input if you think that revising it will ultimately lead to a better response from the language model.
 
-<< FORMATTING >>
-{format_instructions}
-
-REMEMBER: "destination" MUST be one of the candidate prompt names specified below OR it can be "DEFAULT" if the input is not well suited for any of the candidate prompts.
-REMEMBER: "next_inputs" can just be the original input if you don't think any modifications are needed.
-
-<< CANDIDATE PROMPTS >>
+You ONLY have the following destinations to choose from:
+<Destinations>
 {destinations}
+<Destinations>
 
-<< INPUT >>
+This is the question provided:
+<Input>
 {input}
+<Input>
 
-<< OUTPUT  (remember to include the ```json)>>
+When you respond be sure to use the following format:
+<Formatting>
+{format_instructions}
+<Formatting>
+
+IMPORTANT: "destination" MUST be one of the destination names provided OR it can be "DEFAULT" if there is no good match.
+IMPORTANT: "next_inputs" can just be the original input if you don't think any modifications are needed.

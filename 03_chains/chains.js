@@ -2,6 +2,7 @@ import { ChatOpenAI } from 'langchain/chat_models/openai';
 import { ChatPromptTemplate, HumanMessagePromptTemplate, PromptTemplate } from 'langchain/prompts';
 import { RouterOutputParser } from 'langchain/output_parsers';
 import { LLMChain, SimpleSequentialChain, SequentialChain, LLMRouterChain, MultiPromptChain } from 'langchain/chains';
+import { z } from 'zod';
 import fs from 'fs';
 
 // Note: here we use a higher temp for more creativity
@@ -22,6 +23,7 @@ let product1 = 'Queen Size Sheet Set';
 
 let response1 = await llmChain.call({product: product1});
 console.log(response1.text);
+
 
 // Sequential chains
 // This type of chain tat combines multiple chains where the output of one chain
@@ -140,23 +142,40 @@ for(const item of prompts) {
 }
 
 let destinations = prompts.map(item => (item.name + ': ' + item.description)).join('\n');
-//console.log('#####\n' + JSON.stringify(destinations) + '\n######');
+
 
 // Create a default destination in case the LLM cannot decide
 let defaultPrompt = PromptTemplate.fromTemplate('{input}');
 
 let defaultChain = new LLMChain({llm: llm2, prompt: defaultPrompt});
 
-// Load the routing prompt
+// Load the routing prompt, NOTE this differs a lot from the one in the course example
+// as the system kept inventing 'biology' as a destination or selected 'physics'
+// instead of using the correct 'DEFAULT'
 let routerTemplate = fs.readFileSync('./router_template.txt', 'utf8');
 
 // Now we can construct the router with the list of route names and descriptions
 routerTemplate = routerTemplate.replace('{destinations}', destinations);
 
+// Now we have to make a Zod schema to set up the output parser
+let routerParser = RouterOutputParser.fromZodSchema(z.object({
+    destination: z.string().describe('name of the prompt to use or "DEFAULT"'),
+    next_inputs: z.object({
+		input: z.string().describe('a potentially modified version of the original input')
+	})
+}));
+
+let routerFormat = routerParser.getFormatInstructions();
+
+// Using the template and the parser we can now build the prompt for routing
+// and construct the initial routing chain
 let routerPrompt = new PromptTemplate({
 	template: routerTemplate,
     inputVariables: ['input'],
-    outputParser: new RouterOutputParser()
+    outputParser: routerParser,
+	partialVariables: {
+        format_instructions: routerFormat
+    }
 });
 
 let routerChain = LLMRouterChain.fromLLM(llm2, routerPrompt);
